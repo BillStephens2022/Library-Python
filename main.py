@@ -7,11 +7,20 @@ all_books = []
 
 @app.route('/')
 def home():
-    return render_template("index.html")
+    return render_template("index.html", books=all_books)
 
 
-@app.route("/add")
+@app.route("/add", methods=["GET", "POST"])
 def add():
+    if request.method == "POST":
+        new_book = {
+            "title": request.form["title"],
+            "author": request.form["author"],
+            "rating": request.form["rating"]
+        }
+        all_books.append(new_book)
+        # returns a redirect for the home page after form is submitted and user should see new book displayed.
+        return redirect(url_for('home'))
     return render_template("add.html")
 
 

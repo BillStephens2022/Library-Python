@@ -1,10 +1,11 @@
 from flask import Flask, render_template, request, redirect, url_for
-import sqlite3
 from flask_sqlalchemy import SQLAlchemy
+import os
 
 # Create Database
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///new-books-collection.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///books.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 
@@ -20,33 +21,29 @@ class Book(db.Model):
         return f'<Book {self.title}'
 
 
-db.create_all()
-
-# Create Record
-new_book = Book(id=1, title="Harry Potter", author="J. K. Rowling", rating=9.3)
-db.session.add(new_book)
-db.session.commit()
-
-# cursor.execute("INSERT INTO books VALUES(1, 'Harry Potter', 'J. K. Rowling', '9.3')")
-# db.commit()
-
-all_books = []
+# db.create_all()
 
 
 @app.route('/')
 def home():
-    return render_template("index.html", books=all_books)
+    if os.path.isfile("books_collection.db"):
+        all_books = db.session.query(Book).all()
+        print(all_books)
+        return render_template("index.html", books=all_books)
+    else:
+        return render_template("index.html", books=[''])
 
 
 @app.route("/add", methods=["GET", "POST"])
 def add():
     if request.method == "POST":
-        new_book = {
-            "title": request.form["title"],
-            "author": request.form["author"],
-            "rating": request.form["rating"]
-        }
-        all_books.append(new_book)
+        new_book = Book(
+            title=request.form["title"],
+            author=request.form["author"],
+            rating=request.form["rating"]
+        )
+        db.session.add(new_book)
+        db.session.commit()
         # returns a redirect for the home page after form is submitted and user should see new book displayed.
         return redirect(url_for('home'))
     return render_template("add.html")

@@ -1,10 +1,13 @@
 from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.sql import func
 import os
 
 # Create Database
+basedir = os.path.abspath(os.path.dirname(__file__))
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///books.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = \
+    'sqlite:///' + os.path.join(basedir, 'books.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -21,12 +24,13 @@ class Book(db.Model):
         return f'<Book {self.title}'
 
 
-# db.create_all()
+with app.app_context():
+    db.create_all()
 
 
 @app.route('/')
 def home():
-    if os.path.isfile("books_collection.db"):
+    if os.path.isfile("books.db"):
         all_books = db.session.query(Book).all()
         print(all_books)
         return render_template("index.html", books=all_books)
